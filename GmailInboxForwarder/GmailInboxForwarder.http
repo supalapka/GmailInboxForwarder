@@ -1,0 +1,6 @@
+@GmailInboxForwarder_HostAddress = http://localhost:5237
+
+GET {{GmailInboxForwarder_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
