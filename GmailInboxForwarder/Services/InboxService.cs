@@ -1,6 +1,8 @@
-﻿using MailKit;
+﻿using GmailInboxForwarder.Hubs;
+using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.SignalR;
 using MimeKit;
 
 namespace GmailInboxForwarder.Services
@@ -19,7 +21,9 @@ namespace GmailInboxForwarder.Services
         private readonly string _sourceName;
         private readonly string _destinationName;
 
-        public InboxService(IConfiguration configuration)
+        private readonly IHubContext<ActivityHub> _hubContext;
+
+        public InboxService(IConfiguration configuration, IHubContext<ActivityHub> hubContext)
         {
             _imapHost = configuration["IMAP_HOST"] ?? throw new ArgumentException("IMAP_HOST not set");
             _smtpHost = configuration["SMTP_HOST"] ?? throw new ArgumentException("SMTP_HOST not set");
@@ -39,10 +43,12 @@ namespace GmailInboxForwarder.Services
 
             _sourceName = configuration["IMAP_USERNAME"] ?? throw new ArgumentException("IMAP_USERNAME not set");
             _destinationName = configuration["SMTP_USERNAME"] ?? throw new ArgumentException("SMTP_USERNAME not set");
+
+            _hubContext = hubContext;
         }
 
 
-        public async Task Resend()
+        public async Task Resend(string webSocketConnectionId)
         {
             using var imap = new ImapClient();
             await imap.ConnectAsync(_imapHost, _imapPort, true);
@@ -65,6 +71,10 @@ namespace GmailInboxForwarder.Services
             for (int i = 0; i < inbox.Count; i++)
             {
                 var message = await inbox.GetMessageAsync(i);
+
+                await _hubContext.Clients.Client(webSocketConnectionId)
+                    .SendAsync("NewActivity", $"Fetched message {message.MessageId}");
+
 
                 var forwardMessage = new MimeMessage();
                 forwardMessage.From.Add(new MailboxAddress(_sourceName, _sourceInbox));
@@ -106,6 +116,9 @@ namespace GmailInboxForwarder.Services
                 forwardMessage.Date = message.Date;
 
                 await smtp.SendAsync(forwardMessage);
+
+                await _hubContext.Clients.Client(webSocketConnectionId)
+                .SendAsync("NewActivity", $"Forwarded to {_destinationInbox}");
             }
 
             await smtp.DisconnectAsync(true);

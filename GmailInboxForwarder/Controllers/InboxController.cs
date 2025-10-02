@@ -1,4 +1,5 @@
-﻿using GmailInboxForwarder.Services;
+﻿using GmailInboxForwarder.Models.DTO;
+using GmailInboxForwarder.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GmailInboxForwarder.Controllers
@@ -15,18 +16,10 @@ namespace GmailInboxForwarder.Controllers
         }
 
         [HttpPost("resend")]
-        public async Task<IActionResult> ResendAllEmails()
+        public async Task<IActionResult> ResendAll([FromBody] ResendRequest request)
         {
-            try
-            {
-                await _inboxService.Resend();
-                return Ok(new { message = "Resend triggered" });
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _inboxService.Resend(request.WebSocketConnectionId);
+            return Ok();
         }
     }
 }

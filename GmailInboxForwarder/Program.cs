@@ -1,3 +1,4 @@
+using GmailInboxForwarder.Hubs;
 using GmailInboxForwarder.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,7 +10,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:3000")
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -24,6 +26,8 @@ builder.Services.AddSwaggerGen();
 
 // Services
 builder.Services.AddScoped<IInboxService, InboxService>();
+
+builder.Services.AddSignalR();
 
 builder.Configuration.AddEnvironmentVariables();
 
@@ -45,5 +49,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<ActivityHub>("/activityHub");
 
 app.Run();

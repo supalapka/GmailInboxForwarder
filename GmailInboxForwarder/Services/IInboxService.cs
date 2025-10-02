@@ -2,6 +2,6 @@
 {
     public interface IInboxService
     {
-        Task Resend();
+        Task Resend(string webSocketConnectionId);
     }
 }
