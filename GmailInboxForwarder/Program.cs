@@ -2,6 +2,19 @@ using GmailInboxForwarder.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactDev", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -16,6 +29,8 @@ builder.Configuration.AddEnvironmentVariables();
 
 
 var app = builder.Build();
+
+app.UseCors("AllowReactDev");
 
 
 // Configure the HTTP request pipeline.
