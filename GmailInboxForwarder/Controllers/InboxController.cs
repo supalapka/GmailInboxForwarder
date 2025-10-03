@@ -18,8 +18,23 @@ namespace GmailInboxForwarder.Controllers
         [HttpPost("resend")]
         public async Task<IActionResult> ResendAll([FromBody] ResendRequest request)
         {
-            await _inboxService.Resend(request.WebSocketConnectionId);
+            switch (request.Action)
+            {
+                case ResendAction.Start:
+                    await _inboxService.Resend(request.WebSocketConnectionId);
+                    break;
+
+                case ResendAction.Stop:
+                    await _inboxService.Pause(request.WebSocketConnectionId);
+                    break;
+
+                case ResendAction.ClearCache:
+                    await _inboxService.ClearCache(request.WebSocketConnectionId);
+                    break;
+            }
+
             return Ok();
+
         }
     }
 }
